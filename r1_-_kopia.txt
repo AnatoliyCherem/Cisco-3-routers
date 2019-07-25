@@ -1,0 +1,77 @@
+
+en
+conf t
+
+ip dhcp excluded-address 172.16.0.1
+ip dhcp excluded-address 172.16.3.1
+ip dhcp excluded-address 172.16.4.1
+ip dhcp excluded-address 172.16.0.2
+ip dhcp excluded-address 172.16.3.2
+ip dhcp excluded-address 172.16.4.2
+ip dhcp excluded-address 172.16.0.3
+ip dhcp excluded-address 172.16.3.3
+ip dhcp excluded-address 172.16.4.3
+
+
+
+
+
+ip dhcp pool first
+network 172.16.0.0 255.255.255.0
+default-router 172.16.0.1
+
+ip dhcp pool five
+network 172.16.3.1 255.255.255.128
+default-router 172.16.3.1 
+
+ip dhcp pool seven
+network 172.16.4.0 255.255.255.128
+default-router 172.16.0.1
+
+
+
+
+
+
+int gig0/0
+ip address 100.0.0.1 255.255.255.0
+ip nat outside
+ip virtual-reassembly
+no sh
+ex
+int ser0/0/1
+ip addr 172.16.10.11 255.255.255.0
+ip nat inside
+ip virtual-reassembly
+no sh
+ex
+int ser0/0/0
+ip addr 172.16.15.12 255.255.255.0
+ip nat inside
+ip virtual-reassembly
+no sh
+ex
+
+access-list 1 permit 172.16.3.0 0.0.0.127
+access-list 1 permit 172.16.3.128 0.0.0.127
+
+ip nat inside source list 1 interface gig0/0 overload
+ip route 0.0.0.0 0.0.0.0 gig0/0
+
+
+
+
+router rip
+version 2
+no auto-summary
+network 172.16.10.0
+default-information originate
+redistribute bgp 100 metric 0
+exit
+
+router bgp 100
+redistribute rip metric 1
+neighbor 172.16.15.20 remote-as 100
+neighbor 172.16.15.20 default-originate
+network 172.16.15.0 mask 255.255.255.0
+exit
